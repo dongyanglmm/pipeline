@@ -1,0 +1,52 @@
+node{
+    echo pwd()
+
+    //获取代码
+    echo "****************************************************获取代码****************************************************"
+    stage('git clone'){
+        //check CODE
+        git url: 'https://github.com/dongyanglmm/TestSpringBoot.git'
+    }
+    
+    echo "-----------------------------"
+    echo "$CLASSPATH"
+    echo "-----------------------------"
+
+    echo "^^^^^^^^^^^${BUILD_NUMBER}-${BUILD_ID}-${JOB_NAME}-${JENKINS_HOME}^^^^^^^^^^^"
+    
+    //定义gradle环境
+    def gradleHome = tool 'gradle4.6'
+    env.PATH = "${gradleHome}/bin:${env.PATH}"
+    
+    echo "------------环境变量-----------------"
+    echo "${env.PATH}"
+    echo "-------------------------------------"
+    
+    echo "*********************gradle构建*********************"
+    stage('stage build'){
+        //mvn构建
+        sh "gradle clean build"
+    }
+
+    def registryUrl = "192.168.17.133:8888/library"
+    //def preImageNum = ${BUILD_NUMBER} - 1
+    echo "$WORKSPACE"
+
+    //部署war
+    echo "******************************部署中********************"
+    stage('deploy'){
+        echo "deploy begin ....."
+	//构建docker镜像
+	sh "sudo docker build -t $registryUrl/testspringboot:v-${BUILD_NUMBER} $WORKSPACE/"
+	//删除前一个版本的容器
+	sh "sudo docker stop testspringboot"
+	sh "sudo docker rm testspringboot"
+	//删除前一个版本的容器
+	//sh "sudo docker rmi $registryUrl/testspringboot${preImageNum}"
+	//将docker镜像push到远程仓库
+	sh "sudo docker push $registryUrl/testspringboot:v-${BUILD_NUMBER}"
+	//运行docker镜像
+	sh "sudo docker run -p 8082:8080 -d --name testspringboot $registryUrl/testspringboot:v-${BUILD_NUMBER}"
+	echo "deploy end ...."
+    }
+}
