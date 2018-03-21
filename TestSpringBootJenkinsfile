@@ -28,7 +28,7 @@ node{
         sh "gradle clean build"
     }
 
-    def registryUrl = "192.168.17.133:8888/library"
+    def registryUrl = "10.15.1.241:8888/library"
     //def preImageNum = ${BUILD_NUMBER} - 1
     echo "$WORKSPACE"
 
@@ -36,11 +36,12 @@ node{
     echo "******************************部署中********************"
     stage('deploy'){
         echo "deploy begin ....."
+	sh "sudo docker login -u admin -p Harbor12345 10.15.1.241:8888"
 	//构建docker镜像
 	sh "sudo docker build -t $registryUrl/testspringboot:v-${BUILD_NUMBER} $WORKSPACE/"
 	//删除前一个版本的容器
-	sh "sudo docker stop testspringboot"
-	sh "sudo docker rm testspringboot"
+	//sh "sudo docker stop testspringboot"
+	//sh "sudo docker rm testspringboot"
 	//删除前一个版本的容器
 	//sh "sudo docker rmi $registryUrl/testspringboot${preImageNum}"
 	//将docker镜像push到远程仓库
